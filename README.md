@@ -30,6 +30,7 @@ No dependencies. TypeScript runs via Node's built-in type stripping.
 | `src/engine.ts` | The engine: `evaluateRules` |
 | `src/demo.ts` | Toy content-gate scenarios (age / region / parental PIN) |
 | `src/engine.test.ts` | Two focused tests for ordering and skipping |
+| `AGENTS.md` | How I steer AI on this repo (draft — expanding soon) |
 
 ## Design notes
 
@@ -40,6 +41,8 @@ No dependencies. TypeScript runs via Node's built-in type stripping.
 ## Roadmap (one slice at a time)
 
 - [x] README + runnable demo + tests
+- [x] Stub `AGENTS.md` for how I steer AI (recruiters can read this too)
+- [ ] Owner review: correct AI scaffold; expand `AGENTS.md` in my own words
 - [ ] Optional: tiny XState companion example for multi-step flows
 - [ ] Optional: HTML page that prints the evaluation trace in the browser
 
