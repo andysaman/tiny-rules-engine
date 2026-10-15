@@ -1,0 +1,15 @@
+{
+  "name": "tiny-rules-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny, readable rules engine for front-end business logic demos",
+  "type": "module",
+  "scripts": {
+    "demo": "node --experimental-strip-types src/demo.ts",
+    "test": "node --experimental-strip-types --test src/engine.test.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}
