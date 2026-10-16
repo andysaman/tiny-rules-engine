@@ -8,9 +8,9 @@ This is a public hiring artifact. It is meant to be read in one sitting and run 
 
 My resume emphasizes shipping a **rules-engine package** for business logic across large web experiences, and making complex flows explainable. This repo is a stripped-down teaching version of that idea:
 
-- Rules are ordered, named, and descriptive
-- Evaluation returns a **trace** of which rules fired
-- Context updates are plain data (easy to test)
+- Rules are uniquely named `condition` → `action` pairs; actions return a result
+- Two strategies: first match, or evaluate all matches in order
+- Observability (traces) is a separate module that plugs in via hooks
 
 ## Quick start
 
@@ -27,15 +27,19 @@ No dependencies. TypeScript runs via Node's built-in type stripping.
 
 | File | Role |
 |------|------|
-| `src/engine.ts` | The engine: `evaluateRules` |
+| `src/types.ts` | Shared type contracts |
+| `src/engine.ts` | `evaluateFirstMatch` and `evaluateAll` |
+| `src/observability.ts` | Trace collector via evaluation hooks |
 | `src/demo.ts` | Toy content-gate scenarios (age / region / parental PIN) |
-| `src/engine.test.ts` | Two focused tests for ordering and skipping |
-| `AGENTS.md` | How I steer AI on this repo (draft — expanding soon) |
+| `src/engine.test.ts` | Engine unit tests |
+| `src/observability.test.ts` | Observability unit tests |
+| `src/functional.test.ts` | End-to-end gate scenarios |
+| `AGENTS.md` | How I steer AI on this repo |
 
 ## Design notes
 
-1. **Order matters** — later rules see earlier effects (same as many production gate / interstitial systems).
-2. **Trace first** — `hits` and `messages` make decisions reviewable in demos and tests.
+1. **Match → action → result** — the engine does not patch context; actions return the value.
+2. **Observability is a module** — the engine stays pure; traces plug in through hooks.
 3. **Stay tiny** — no framework, no persistence, no product roadmap. One idea, done well enough to discuss in an interview.
 
 ## Roadmap (one slice at a time)

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "demo": "node --experimental-strip-types src/demo.ts",
-    "test": "node --experimental-strip-types --test src/engine.test.ts"
+    "test": "node --experimental-strip-types --test src/*.test.ts"
   },
   "engines": {
     "node": ">=22"

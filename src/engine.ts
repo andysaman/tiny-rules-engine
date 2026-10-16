@@ -1,60 +1,61 @@
 /**
- * Tiny ordered rules engine.
+ * Tiny rules engine with two evaluation strategies.
  *
- * Rules are pure predicates + effects. The engine evaluates them in order,
- * applies matching effects to a context copy, and returns an inspectable trace.
- * That inspectability is the point: business logic stays readable and testable.
+ * If a rule's condition matches, its action runs and returns that rule's result.
+ * Observability plugs in via hooks — see `observability.ts`.
+ * Unique names are compile-time via `defineRules` in `types.ts`.
  */
 
-export type RuleContext = Record<string, unknown>;
+import type {
+  EvaluateAllOptions,
+  EvaluateFirstMatchOptions,
+  Rule,
+} from "./types.ts";
 
-export type RuleEffect = {
-  set?: Record<string, unknown>;
-  messages?: string[];
-};
-
-export type Rule<TContext extends RuleContext = RuleContext> = {
-  id: string;
-  description: string;
-  when: (ctx: Readonly<TContext>) => boolean;
-  then: (ctx: Readonly<TContext>) => RuleEffect;
-};
-
-export type RuleHit = {
-  id: string;
-  description: string;
-  effect: RuleEffect;
-};
-
-export type EvaluateResult<TContext extends RuleContext = RuleContext> = {
-  context: TContext;
-  hits: RuleHit[];
-  messages: string[];
-};
-
-function applyEffect<TContext extends RuleContext>(
-  ctx: TContext,
-  effect: RuleEffect,
-): TContext {
-  const next = { ...ctx, ...(effect.set ?? {}) } as TContext;
-  return next;
+/** First matching condition wins; returns that action's result (or undefined). */
+export function evaluateFirstMatch<TInput, TResult>(
+  rules: readonly Rule<TInput, TResult>[],
+  input: TInput,
+  options?: EvaluateFirstMatchOptions<TResult>,
+): TResult | undefined {
+  for (const rule of rules) {
+    if (!rule.condition(input)) continue;
+    const result = rule.action(input);
+    options?.hooks?.onMatch?.({ name: rule.name, result });
+    return result;
+  }
+  return undefined;
 }
 
-export function evaluateRules<TContext extends RuleContext>(
-  rules: readonly Rule<TContext>[],
-  initial: TContext,
-): EvaluateResult<TContext> {
-  let context = { ...initial };
-  const hits: RuleHit[] = [];
-  const messages: string[] = [];
+/** Every matching rule's action runs; returns results in order. */
+export function evaluateAll<TInput, TResult>(
+  rules: readonly Rule<TInput, TResult>[],
+  input: TInput,
+  options?: EvaluateAllOptions<TResult>,
+): TResult[];
+
+/** Every matching rule's action runs; `combine` folds results into one value. */
+export function evaluateAll<TInput, TResult, TCombined>(
+  rules: readonly Rule<TInput, TResult>[],
+  input: TInput,
+  options: EvaluateAllOptions<TResult, TCombined> & {
+    combine: (results: readonly TResult[]) => TCombined;
+  },
+): TCombined;
+
+export function evaluateAll<TInput, TResult, TCombined>(
+  rules: readonly Rule<TInput, TResult>[],
+  input: TInput,
+  options?: EvaluateAllOptions<TResult, TCombined>,
+): TResult[] | TCombined {
+  const results: TResult[] = [];
 
   for (const rule of rules) {
-    if (!rule.when(context)) continue;
-    const effect = rule.then(context);
-    hits.push({ id: rule.id, description: rule.description, effect });
-    if (effect.messages?.length) messages.push(...effect.messages);
-    context = applyEffect(context, effect);
+    if (!rule.condition(input)) continue;
+    const result = rule.action(input);
+    options?.hooks?.onMatch?.({ name: rule.name, result });
+    results.push(result);
   }
 
-  return { context, hits, messages };
+  return options?.combine ? options.combine(results) : results;
 }
