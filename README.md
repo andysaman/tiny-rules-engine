@@ -2,8 +2,6 @@
 
 A small, inspectable rules engine for front-end **business logic**.
 
-This is a public hiring artifact. It is meant to be read in one sitting and run locally in under a minute. It is **not** affiliated with any employer.
-
 ## Value proposition
 
 Front-end product logic often starts as a few `if`s and quietly becomes a maze: order is implicit, edge cases hide in nesting, tracing and navigation get copy-pasted into every branch, and the same checks cannot be reused without duplicating the maze.
@@ -113,6 +111,8 @@ What you gain:
 - **Readable order** — priority is list order, not brace depth
 - **Inspectable without clutter** — one trace collector instead of `hits.push` in every branch
 
+
+
 ## The core is this small
 
 The interesting part of the engine is a short loop: skip non-matches, run the first action, optionally notify observers, return. No framework, no graph, no DSL.
@@ -147,24 +147,29 @@ Requires Node.js 22+.
 
 ```bash
 npm run demo
-npm test
+npm test          # unit/functional tests, then typecheck + style lint
+npm run typecheck # tsc --noEmit (also runs as part of npm test)
 ```
 
-No runtime dependencies. TypeScript runs via Node's built-in type stripping.
+No runtime dependencies. TypeScript runs via Node's built-in type stripping; `typescript` / `@types/node` are dev-only for the editor and `typecheck`.
 
 ## What to look at
 
-| File | Role |
-|------|------|
-| `src/types.ts` | Shared type contracts |
-| `src/utils/rules.ts` | `rulesFor<Input, Result>().define([...])` |
-| `src/engine.ts` | `evaluateFirstMatch` and `evaluateAll` |
-| `src/observability.ts` | Trace collector via evaluation hooks |
-| `src/demo.ts` | Toy content-gate scenarios (age / region / parental PIN) |
-| `src/engine.test.ts` | Engine unit tests |
-| `src/observability.test.ts` | Observability unit tests |
-| `src/functional.test.ts` | End-to-end gate scenarios |
-| `AGENTS.md` | How I steer AI on this repo |
+
+| File                        | Role                                                     |
+| --------------------------- | -------------------------------------------------------- |
+| `src/types.ts`              | Shared type contracts                                    |
+| `src/utils/rules.ts`        | `rulesFor<Input, Result>().define([...])`                |
+| `src/engine.ts`             | `evaluateFirstMatch` and `evaluateAll`                   |
+| `src/observability.ts`      | Trace collector via evaluation hooks                     |
+| `src/demo.ts`               | Toy content-gate scenarios (age / region / parental PIN) |
+| `src/engine.test.ts`        | Engine unit tests                                        |
+| `src/observability.test.ts` | Observability unit tests                                 |
+| `src/functional.test.ts`    | End-to-end gate scenarios                                |
+| `AGENTS.md`                 | How I steer AI on this repo                              |
+
+
+
 
 ## Design notes
 
@@ -172,13 +177,17 @@ No runtime dependencies. TypeScript runs via Node's built-in type stripping.
 2. **Observability is a module** — the engine stays pure; traces plug in through hooks.
 3. **Stay tiny** — no framework, no persistence, no product roadmap. One idea, done well enough to discuss in an interview.
 
+
+
 ## Roadmap (one slice at a time)
 
 - [x] README + runnable demo + tests
 - [x] Stub `AGENTS.md` for how I steer AI (recruiters can read this too)
-- [ ] Owner review: correct AI scaffold; expand `AGENTS.md` in my own words
+- [x] Owner review: correct AI scaffold; expand `AGENTS.md` in my own words
 - [ ] Optional: tiny XState companion example for multi-step flows
 - [ ] Optional: HTML page that prints the evaluation trace in the browser
+
+
 
 ## License
 

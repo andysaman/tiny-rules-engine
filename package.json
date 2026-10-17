@@ -8,7 +8,7 @@
     "demo": "node --experimental-strip-types src/demo.ts",
     "lint:style": "node --experimental-strip-types scripts/check-early-return-spacing.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\" && npm run lint:style"
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\" && npm run typecheck && npm run lint:style"
   },
   "engines": {
     "node": ">=22"
