@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { evaluateAll, evaluateFirstMatch } from "./engine.ts";
 import { createTraceCollector } from "./observability.ts";
-import { defineRules } from "./types.ts";
+import { rulesFor } from "./utils/rules.ts";
 
 type GateInput = {
   age: number;
@@ -17,7 +17,7 @@ type GateResult = {
 };
 
 function gateRules() {
-  return defineRules<GateInput, GateResult>()([
+  return rulesFor<GateInput, GateResult>().define([
     {
       name: "region-block",
       condition: (input) => !["US", "CA", "GB"].includes(input.region),

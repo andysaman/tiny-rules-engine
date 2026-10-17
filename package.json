@@ -6,10 +6,16 @@
   "type": "module",
   "scripts": {
     "demo": "node --experimental-strip-types src/demo.ts",
-    "test": "node --experimental-strip-types --test src/*.test.ts"
+    "lint:style": "node --experimental-strip-types scripts/check-early-return-spacing.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\" && npm run lint:style"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.6.3"
   },
   "license": "MIT"
 }

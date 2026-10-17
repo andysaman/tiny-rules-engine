@@ -1,6 +1,6 @@
 import { evaluateFirstMatch } from "./engine.ts";
 import { createTraceCollector } from "./observability.ts";
-import { defineRules } from "./types.ts";
+import { rulesFor } from "./utils/rules.ts";
 
 /**
  * Toy "gate" rules for a content interstitial.
@@ -18,7 +18,7 @@ type GateResult = {
   interstitial: "age-gate" | "region-block" | "pin-required";
 };
 
-const rules = defineRules<GateInput, GateResult>()([
+const rules = rulesFor<GateInput, GateResult>().define([
   {
     name: "region-block",
     condition: (input) => !["US", "CA", "GB"].includes(input.region),

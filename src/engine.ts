@@ -3,7 +3,7 @@
  *
  * If a rule's condition matches, its action runs and returns that rule's result.
  * Observability plugs in via hooks — see `observability.ts`.
- * Unique names are compile-time via `defineRules` in `types.ts`.
+ * Unique names are compile-time via `rulesFor` in `utils/rules.ts`.
  */
 
 import type {
@@ -20,10 +20,12 @@ export function evaluateFirstMatch<TInput, TResult>(
 ): TResult | undefined {
   for (const rule of rules) {
     if (!rule.condition(input)) continue;
+
     const result = rule.action(input);
     options?.hooks?.onMatch?.({ name: rule.name, result });
     return result;
   }
+
   return undefined;
 }
 
@@ -52,6 +54,7 @@ export function evaluateAll<TInput, TResult, TCombined>(
 
   for (const rule of rules) {
     if (!rule.condition(input)) continue;
+
     const result = rule.action(input);
     options?.hooks?.onMatch?.({ name: rule.name, result });
     results.push(result);

@@ -1,16 +1,145 @@
 # tiny-rules-engine
 
-A small, inspectable rules engine for front-end **business logic** demos.
+A small, inspectable rules engine for front-end **business logic**.
 
 This is a public hiring artifact. It is meant to be read in one sitting and run locally in under a minute. It is **not** affiliated with any employer.
 
+## Value proposition
+
+Front-end product logic often starts as a few `if`s and quietly becomes a maze: order is implicit, edge cases hide in nesting, tracing and navigation get copy-pasted into every branch, and the same checks cannot be reused without duplicating the maze.
+
+**Before — nested decisions, hand-rolled tracing, navigation tangled in:**
+
+```ts
+function enterWatchPage(user: {
+  age: number;
+  region: string;
+  hasParentalControls: boolean;
+  featureFlags: Record<string, boolean>;
+}) {
+  const hits: string[] = [];
+
+  if (["US", "CA", "GB"].includes(user.region)) {
+    if (user.age >= 18) {
+      if (user.hasParentalControls && user.featureFlags.parentalPin) {
+        hits.push("pin-required");
+        console.log("hits", hits);
+        navigate("/gates/parental-pin");
+        return;
+      }
+
+      hits.push("allowed");
+      console.log("hits", hits);
+      navigate("/watch");
+      return;
+    } else {
+      hits.push("age-gate");
+      console.log("hits", hits);
+      navigate("/gates/age");
+      return;
+    }
+  } else {
+    hits.push("region-block");
+    console.log("hits", hits);
+    navigate("/gates/unavailable-region");
+    return;
+  }
+}
+
+// Need the same gates on checkout? Copy the whole nest — or drift forever.
+function enterCheckout(user: /* same shape */) {
+  /* paste resolveGate again, tweak a branch, forget a hits.push… */
+}
+```
+
+**After — named rules return the path; call sites stay short:**
+
+```ts
+// Define once — each action returns where to go.
+const regionBlock = {
+  name: "region-block",
+  condition: (user: GateInput) => !["US", "CA", "GB"].includes(user.region),
+  action: () => "/gates/unavailable-region",
+};
+
+const ageGate = {
+  name: "age-gate",
+  condition: (user: GateInput) => user.age < 18,
+  action: () => "/gates/age",
+};
+
+const parentalPin = {
+  name: "parental-pin",
+  condition: (user: GateInput) =>
+    user.hasParentalControls && Boolean(user.featureFlags.parentalPin),
+  action: () => "/gates/parental-pin",
+};
+
+// Compose per surface — same rules, different lists.
+const watchRules = rulesFor<GateInput, string>().define([
+  regionBlock,
+  ageGate,
+  parentalPin,
+]);
+
+const checkoutRules = rulesFor<GateInput, string>().define([
+  regionBlock,
+  parentalPin,
+]);
+
+function enterWatchPage(user: GateInput) {
+  const trace = createTraceCollector<string>();
+  const path = evaluateFirstMatch(watchRules, user, { hooks: trace.hooks });
+
+  console.log("hits", trace.getTrace().hits.map((h) => h.name));
+  navigate(path ?? "/watch");
+}
+
+function enterCheckout(user: GateInput) {
+  const trace = createTraceCollector<string>();
+  const path = evaluateFirstMatch(checkoutRules, user, { hooks: trace.hooks });
+
+  console.log("hits", trace.getTrace().hits.map((h) => h.name));
+  navigate(path ?? "/checkout");
+}
+```
+
+Nested `if`s fuse decision, logging, and routing into one procedure you have to copy. Rules are data: define a check once, drop it into another list, and keep every call site to “evaluate → log hits → navigate.”
+
+What you gain:
+
+- **Simple call sites** — a few lines instead of a nested maze
+- **Composable rules** — reuse `regionBlock` / `parentalPin` across watch and checkout
+- **Readable order** — priority is list order, not brace depth
+- **Inspectable without clutter** — one trace collector instead of `hits.push` in every branch
+
+## The core is this small
+
+The interesting part of the engine is a short loop: skip non-matches, run the first action, optionally notify observers, return. No framework, no graph, no DSL.
+
+```ts
+export function evaluateFirstMatch<TInput, TResult>(
+  rules: readonly Rule<TInput, TResult>[],
+  input: TInput,
+  options?: EvaluateFirstMatchOptions<TResult>,
+): TResult | undefined {
+  for (const rule of rules) {
+    if (!rule.condition(input)) continue;
+
+    const result = rule.action(input);
+    options?.hooks?.onMatch?.({ name: rule.name, result });
+    return result;
+  }
+
+  return undefined;
+}
+```
+
+That is the whole first-match strategy (`src/engine.ts`). `evaluateAll` is the same loop without the early `return`, plus an optional `combine`.
+
 ## Why this exists
 
-My resume emphasizes shipping a **rules-engine package** for business logic across large web experiences, and making complex flows explainable. This repo is a stripped-down teaching version of that idea:
-
-- Rules are uniquely named `condition` → `action` pairs; actions return a result
-- Two strategies: first match, or evaluate all matches in order
-- Observability (traces) is a separate module that plugs in via hooks
+My resume emphasizes shipping a **rules-engine package** for business logic across large web experiences, and making complex flows explainable. This repo is a stripped-down teaching version of that idea.
 
 ## Quick start
 
@@ -21,13 +150,14 @@ npm run demo
 npm test
 ```
 
-No dependencies. TypeScript runs via Node's built-in type stripping.
+No runtime dependencies. TypeScript runs via Node's built-in type stripping.
 
 ## What to look at
 
 | File | Role |
 |------|------|
 | `src/types.ts` | Shared type contracts |
+| `src/utils/rules.ts` | `rulesFor<Input, Result>().define([...])` |
 | `src/engine.ts` | `evaluateFirstMatch` and `evaluateAll` |
 | `src/observability.ts` | Trace collector via evaluation hooks |
 | `src/demo.ts` | Toy content-gate scenarios (age / region / parental PIN) |

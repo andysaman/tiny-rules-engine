@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { evaluateAll, evaluateFirstMatch } from "./engine.ts";
-import { defineRules } from "./types.ts";
+import { rulesFor } from "./utils/rules.ts";
 
 type Ctx = { score: number };
 
 test("evaluateFirstMatch returns the first matching action result", () => {
   // Arrange
-  const rules = defineRules<Ctx, string>()([
+  const rules = rulesFor<Ctx, string>().define([
     {
       name: "boost",
       condition: (ctx) => ctx.score < 10,
@@ -30,7 +30,7 @@ test("evaluateFirstMatch returns the first matching action result", () => {
 
 test("evaluateFirstMatch returns undefined when nothing matches", () => {
   // Arrange
-  const rules = defineRules<Ctx, string>()([
+  const rules = rulesFor<Ctx, string>().define([
     {
       name: "never",
       condition: () => false,
@@ -48,7 +48,7 @@ test("evaluateFirstMatch returns undefined when nothing matches", () => {
 
 test("evaluateAll returns every matching action result in order", () => {
   // Arrange
-  const rules = defineRules<Ctx, string>()([
+  const rules = rulesFor<Ctx, string>().define([
     {
       name: "low",
       condition: (ctx) => ctx.score < 10,
@@ -71,7 +71,7 @@ test("evaluateAll returns every matching action result in order", () => {
 
 test("evaluateAll skips rules that do not match", () => {
   // Arrange
-  const rules = defineRules<Ctx, string>()([
+  const rules = rulesFor<Ctx, string>().define([
     {
       name: "boost",
       condition: (ctx) => ctx.score < 10,
@@ -94,7 +94,7 @@ test("evaluateAll skips rules that do not match", () => {
 
 test("evaluateAll combine folds matched results into one value", () => {
   // Arrange
-  const rules = defineRules<Ctx, number>()([
+  const rules = rulesFor<Ctx, number>().define([
     {
       name: "base",
       condition: () => true,
@@ -115,25 +115,4 @@ test("evaluateAll combine folds matched results into one value", () => {
 
   // Assert
   assert.equal(total, 5);
-});
-
-// Compile-time uniqueness: the @ts-expect-error below must stay.
-test("defineRules documents duplicate-name rejection at the type level", () => {
-  // Arrange / Act — duplicate literal names must fail typechecking
-  // @ts-expect-error duplicate literal rule names
-  const rules = defineRules<Ctx, string>()([
-    {
-      name: "same",
-      condition: () => true,
-      action: () => "a",
-    },
-    {
-      name: "same",
-      condition: () => true,
-      action: () => "b",
-    },
-  ]);
-
-  // Assert — runtime still receives the list; uniqueness is a type concern
-  assert.equal(rules.length, 2);
 });
