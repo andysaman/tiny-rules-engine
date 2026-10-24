@@ -12,6 +12,7 @@ import process from "node:process";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const SRC = path.join(ROOT, "src");
+const SCRIPTS = path.join(ROOT, "scripts");
 
 /** Complete single-line exits only — skips multi-line `return {` / `return fn(`. */
 const EARLY_EXIT =
@@ -43,6 +44,7 @@ function nextSignificantLine(
   for (let i = afterIndex + 1; i < lines.length; i++) {
     const text = lines[i] ?? "";
     if (BLANK.test(text) || LINE_COMMENT.test(text)) continue;
+
     return { index: i, text };
   }
   return undefined;
@@ -58,6 +60,7 @@ function checkFile(file: string): Finding[] {
 
     const next = nextSignificantLine(lines, i);
     if (!next) continue;
+
     if (CLOSING_BRACE.test(next.text)) continue;
 
     const gap = lines.slice(i + 1, next.index);
@@ -74,7 +77,7 @@ function checkFile(file: string): Finding[] {
   return findings;
 }
 
-const findings = walkTsFiles(SRC).flatMap(checkFile);
+const findings = [SRC, SCRIPTS].flatMap((dir) => walkTsFiles(dir).flatMap(checkFile));
 
 if (findings.length === 0) {
   console.log("early-return spacing: ok");

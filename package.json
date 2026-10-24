@@ -5,16 +5,18 @@
   "description": "A tiny, readable rules engine for front-end business logic demos",
   "type": "module",
   "scripts": {
-    "demo": "node --experimental-strip-types src/demo.ts",
-    "lint:style": "node --experimental-strip-types scripts/check-early-return-spacing.ts",
+    "demo": "node src/demo.ts",
+    "lint:style": "node scripts/check-early-return-spacing.ts",
+    "check:node": "node scripts/check-node-pin.ts --local",
+    "audit:critical": "npm audit --audit-level=critical",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\" && npm run typecheck && npm run lint:style"
+    "test": "npm run check:node && node --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\" && npm run typecheck && npm run lint:style"
   },
   "engines": {
-    "node": ">=22"
+    "node": "24.22.1"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
+    "@types/node": "^24.19.2",
     "typescript": "^5.6.3"
   },
   "license": "MIT"

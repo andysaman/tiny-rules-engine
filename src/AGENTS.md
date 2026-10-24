@@ -52,5 +52,5 @@ Keep `Rule` as `name` + `condition` + `action → TResult`. Always bind types wi
 
 - Colocate unit tests next to the module they cover (`foo.ts` → `foo.test.ts`).
 - Every test follows **Arrange / Act / Assert** (label the sections with comments).
-- Blank line after early `return` / `continue` / `break` when more code follows in the same block (`npm run lint:style`).
+- Blank line after early `return` / `continue` / `break` when more code follows in the same block (`npm run lint:style`, covers `src/` and `scripts/`).
 - `demo.ts` stays a printable content-gate toy (age / region / parental PIN). Prefer another scenario over abstracting the demo into a library.

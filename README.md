@@ -137,55 +137,23 @@ export function evaluateFirstMatch<TInput, TResult>(
 
 That is the whole first-match strategy (`src/engine.ts`). `evaluateAll` is the same loop without the early `return`, plus an optional `combine`.
 
-## Why this exists
-
-My resume emphasizes shipping a **rules-engine package** for business logic across large web experiences, and making complex flows explainable. This repo is a stripped-down teaching version of that idea.
-
 ## Quick start
 
-Requires Node.js 22+.
+Requires Node.js 24.22.1 (Active LTS), pinned in `.nvmrc`. npm refuses other versions.
 
 ```bash
+npm ci
 npm run demo
-npm test          # unit/functional tests, then typecheck + style lint
-npm run typecheck # tsc --noEmit (also runs as part of npm test)
+npm test               # pin check, unit/functional tests, typecheck, style lint
+npm run typecheck      # tsc --noEmit (also runs as part of npm test)
+npm run audit:critical # fails when a critical advisory is present
 ```
 
 No runtime dependencies. TypeScript runs via Node's built-in type stripping; `typescript` / `@types/node` are dev-only for the editor and `typecheck`.
 
-## What to look at
+## Security
 
-
-| File                        | Role                                                     |
-| --------------------------- | -------------------------------------------------------- |
-| `src/types.ts`              | Shared type contracts                                    |
-| `src/utils/rules.ts`        | `rulesFor<Input, Result>().define([...])`                |
-| `src/engine.ts`             | `evaluateFirstMatch` and `evaluateAll`                   |
-| `src/observability.ts`      | Trace collector via evaluation hooks                     |
-| `src/demo.ts`               | Toy content-gate scenarios (age / region / parental PIN) |
-| `src/engine.test.ts`        | Engine unit tests                                        |
-| `src/observability.test.ts` | Observability unit tests                                 |
-| `src/functional.test.ts`    | End-to-end gate scenarios                                |
-| `AGENTS.md`                 | How I steer AI on this repo                              |
-
-
-
-
-## Design notes
-
-1. **Match → action → result** — the engine does not patch context; actions return the value.
-2. **Observability is a module** — the engine stays pure; traces plug in through hooks.
-3. **Stay tiny** — no framework, no persistence, no product roadmap. One idea, done well enough to discuss in an interview.
-
-
-
-## Roadmap (one slice at a time)
-
-- [x] README + runnable demo + tests
-- [x] Stub `AGENTS.md` for how I steer AI (recruiters can read this too)
-- [x] Owner review: correct AI scaffold; expand `AGENTS.md` in my own words
-- [ ] Optional: tiny XState companion example for multi-step flows
-- [ ] Optional: HTML page that prints the evaluation trace in the browser
+Node.js 24.22.1 is pinned exactly. CI fails when `npm audit` reports a critical advisory, and when Node.js has published a newer security release on this major line. Dependabot opens security-update pull requests for npm and GitHub Actions. A weekly workflow opens a pull request that moves the pin to that security release.
 
 
 

@@ -1,6 +1,6 @@
 # Agent notes
 
-Public hiring demo: a tiny ordered rules engine. Read `README.md` for intent; keep changes sitting-sized.
+Public demo: a tiny ordered rules engine. Read `README.md` for intent; keep changes sitting-sized.
 
 ## Don't
 
@@ -12,9 +12,9 @@ Public hiring demo: a tiny ordered rules engine. Read `README.md` for intent; ke
 
 ## Quirks
 
-- **Node 22+ only.** Run via `node --experimental-strip-types` (see `package.json` scripts). No `tsc` build.
+- **Node.js 24.22.1 only.** Pinned in `.nvmrc` and `package.json` `engines` (`.npmrc` sets `engine-strict`). Type stripping is stable, so scripts run with `node file.ts`. `npm test` refuses a different runtime. CI fails when this pin is behind a Node.js security release; a weekly workflow opens a pull request to move it. No `tsc` build.
 - **`.ts` import specifiers** are required (`./engine.ts`). This is Node strip-types, not a bundler workflow.
-- **Zero runtime deps.** Tests use `node:test` + `node:assert/strict`. Dev-only: `@types/node` + `typescript` for editor/`npm run typecheck` (`tsconfig.json`). No `tsc` emit/build. `npm test` runs unit tests, then `typecheck`, then `lint:style`.
+- **Zero runtime deps.** Tests use `node:test` + `node:assert/strict`. Dev-only: `@types/node` + `typescript` for editor/`npm run typecheck` (`tsconfig.json`). No `tsc` emit/build. `npm test` runs the Node pin check, unit tests, `typecheck`, then `lint:style`.
 - **Cross-cutting concerns are modules.** Observability, logging, and similar concerns get their own file and plug in via hooks — do not fold them into `engine.ts`.
 - **Shared types live in `src/types.ts`.** If a type is imported by more than one module, define it there — never re-home it inside a feature module.
 - **Rule lists via `rulesFor<Input, Result>().define([...])`.** Lives in `src/utils/rules.ts`; locks result types and unique names at the definition site. Do not add runtime uniqueness throws in the engine.

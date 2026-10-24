@@ -1,0 +1,61 @@
+name: Node security
+
+on:
+  schedule:
+    # Monday 15:17 UTC. Re-checks main even when nobody pushes.
+    - cron: "17 15 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run audit:critical
+
+  node-pin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Move the pin to the latest Node.js security release
+        id: bump
+        run: node scripts/check-node-pin.ts --update
+      - name: Open a pull request for the new pin
+        if: steps.bump.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PIN: ${{ steps.bump.outputs.version }}
+        run: |
+          branch="node-security-${PIN}"
+          existing="$(gh pr list --head "$branch" --state open --json url --jq '.[0].url')"
+          if [ -n "$existing" ]; then
+            echo "Pull request already open: $existing"
+            exit 0
+          fi
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git push origin --delete "$branch"
+          fi
+          git checkout -b "$branch"
+          git add .nvmrc package.json package-lock.json README.md AGENTS.md
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Pin Node.js ${PIN} to pick up the latest security release."
+          git push origin "HEAD:${branch}"
+          gh pr create --title "Pin Node.js ${PIN}" --body "$(cat <<EOF
+          Node.js published security release ${PIN} on the pinned major line.
+
+          This updates \`.nvmrc\`, \`package.json\` \`engines\`, and the docs that name the pin. CI runs the test suite and \`npm audit --audit-level=critical\` on the branch.
+
+          EOF
+          )"
