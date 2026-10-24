@@ -139,21 +139,62 @@ That is the whole first-match strategy (`src/engine.ts`). `evaluateAll` is the s
 
 ## Quick start
 
-Requires Node.js 24.22.1 (Active LTS), pinned in `.nvmrc`. npm refuses other versions.
-
 ```bash
 npm ci
 npm run demo
-npm test               # pin check, unit/functional tests, typecheck, style lint
-npm run typecheck      # tsc --noEmit (also runs as part of npm test)
-npm run audit:critical # fails when a critical advisory is present
+npm test
 ```
 
-No runtime dependencies. TypeScript runs via Node's built-in type stripping; `typescript` / `@types/node` are dev-only for the editor and `typecheck`.
+`npm run demo` prints the content-gate scenarios in `src/demo.ts`. Node runs those TypeScript files directly (`node src/demo.ts`).
+
+## Design
+
+A rule is `name`, `condition`, and `action`. Bind the list with `rulesFor<Input, Result>().define([...])` from `src/utils/rules.ts` so the result type and unique names are checked at that call site. Keep the names as string literals there; a `Rule[]` annotation widens them and the uniqueness check no longer applies. A duplicate name fails at `define`.
+
+`condition` and `action` receive `Readonly<input>`. A match runs `action` and returns that value. The engine stays a pure loop: no context merging, patches, or I/O.
+
+Two strategies, both in `src/engine.ts`:
+
+- `evaluateFirstMatch` returns the first match, or `undefined`.
+- `evaluateAll` runs every match and returns the results in order. Pass `combine` to fold them into one value.
+
+`hooks` and `combine` travel in one options object.
+
+Tracing stays outside the loop. `createTraceCollector` in `src/observability.ts` implements `onMatch` and records hits. Logging or metrics would be another module that plugs in the same way.
+
+```
+types.ts                 shared contracts only
+engine.ts                evaluateFirstMatch / evaluateAll
+observability.ts         createTraceCollector
+utils/rules.ts           rulesFor().define
+demo.ts / *.test.ts      the toy gate and the tests
+```
+
+`types.ts` is the only place shared types are defined. `engine.ts`, `observability.ts`, and `utils/rules.ts` each import that file only. Call sites import types from `types.ts` and functions from the module that owns them. A type stays in its module until a second module needs it.
+
+## Development
+
+Runtime dependencies: none. Tests use `node:test` and `node:assert/strict`. `typescript` and `@types/node` are dev-only, for the editor and `npm run typecheck` (`tsc --noEmit`).
+
+Relative imports keep the `.ts` extension (`./engine.ts`). That matches Node's type stripping.
+
+`npm test` runs, in order: the Node.js pin check, unit and functional tests, `typecheck`, then `lint:style`.
+
+| Suite | File | Covers |
+|-------|------|--------|
+| Engine | `src/engine.test.ts` | `evaluateFirstMatch` / `evaluateAll` |
+| Observability | `src/observability.test.ts` | `createTraceCollector` |
+| Rule lists | `src/utils/rules.test.ts` | `rulesFor().define` |
+| Functional | `src/functional.test.ts` | Engine, tracing, and the gate scenarios |
+| Node pin | `scripts/node-pin.test.ts` | The pin checker |
+
+Unit tests sit next to the module they cover. Each test is arranged as Arrange / Act / Assert.
+
+`npm run lint:style` checks `src/` and `scripts/`. After `return`, `continue`, or `break`, leave a blank line when another statement follows in the same block.
 
 ## Security
 
-Node.js 24.22.1 is pinned exactly. CI fails when `npm audit` reports a critical advisory, and when Node.js has published a newer security release on this major line. Dependabot opens security-update pull requests for npm and GitHub Actions. A weekly workflow opens a pull request that moves the pin to that security release.
+Node.js 24.22.1 is pinned exactly in `.nvmrc` and `package.json` `engines`. `.npmrc` sets `engine-strict`, so npm installs only on that version. `npm run audit:critical` fails when `npm audit` reports a critical advisory. CI runs that audit, and fails when Node.js has published a newer security release on this major line. Dependabot opens security-update pull requests for npm and GitHub Actions. A weekly workflow opens a pull request that moves the pin to that security release.
 
 
 
