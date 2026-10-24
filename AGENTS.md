@@ -21,6 +21,29 @@ Public demo: a tiny ordered rules engine. Read `README.md` for intent; keep chan
 - **Prefer an options object** when a function would otherwise take multiple optional/confusable trailing args (hooks, combine, etc.).
 - **Blank line after early exits.** After `return` / `continue` / `break`, leave an empty line when more code follows in the same block (not required before `}`). Enforced by `npm run lint:style` (zero-dep script).
 
+## Shipping a change
+
+When the user asks to land work on `main`, open a pull request and squash-merge it. The subject is one sentence ending in a period. The body says why. GitHub appends `(#N)`.
+
+1. Branch from an up-to-date `main`. Use a short kebab-case name.
+2. Commit on that branch. Run `npm test` when the local Node version matches `.nvmrc`.
+3. `git push -u origin HEAD`
+4. `gh pr create` with this body:
+
+```markdown
+## Summary
+- …
+
+## Test plan
+- [ ] CI check `test` passes
+```
+
+5. `gh pr checks <number> --watch`
+6. After `test` passes, `gh pr merge <number> --squash`. `--subject` is the commit subject, including the period. `--body` is the commit’s why, so the test plan stays on the pull request.
+7. `git checkout main && git pull`
+
+The check `test` runs `npm test`, `npm run audit:critical`, and `node scripts/check-node-pin.ts --security`.
+
 ## Progressive disclosure
 
 | Path | When |
