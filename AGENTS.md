@@ -12,7 +12,7 @@ Public demo: a tiny ordered rules engine. Read `README.md` for intent; keep chan
 
 ## Quirks
 
-- **Node.js 24.22.1 only.** Pinned in `.nvmrc` and `package.json` `engines` (`.npmrc` sets `engine-strict`). Type stripping is stable, so scripts run with `node file.ts`. `npm test` refuses a different runtime. CI fails when this pin is behind a Node.js security release; a weekly workflow opens a pull request to move it. No `tsc` build.
+- **Node.js 24.22.3 only.** Pinned in `.nvmrc` and `package.json` `engines` (`.npmrc` sets `engine-strict`). Type stripping is stable, so scripts run with `node file.ts`. `npm test` refuses a different runtime. CI fails when this pin is behind a Node.js security release; a weekly workflow opens a pull request to move it. No `tsc` build.
 - **`.ts` import specifiers** are required (`./engine.ts`). This is Node strip-types, not a bundler workflow.
 - **Zero runtime deps.** Tests use `node:test` + `node:assert/strict`. Dev-only: `@types/node` + `typescript` for editor/`npm run typecheck` (`tsconfig.json`). No `tsc` emit/build. `npm test` runs the Node pin check, unit tests, `typecheck`, then `lint:style`.
 - **Cross-cutting concerns are modules.** Observability, logging, and similar concerns get their own file and plug in via hooks — do not fold them into `engine.ts`.
