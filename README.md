@@ -194,7 +194,7 @@ Unit tests sit next to the module they cover. Each test is arranged as Arrange /
 
 ## Security
 
-Node.js 24.22.1 is pinned exactly in `.nvmrc` and `package.json` `engines`. `.npmrc` sets `engine-strict`, so npm installs only on that version. `npm run audit:critical` fails when `npm audit` reports a critical advisory. CI runs that audit, and fails when Node.js has published a newer security release on this major line. Dependabot opens security-update pull requests for npm and GitHub Actions. A weekly workflow opens a pull request that moves the pin to that security release.
+Node.js 24.22.3 is pinned exactly in `.nvmrc` and `package.json` `engines`. `.npmrc` sets `engine-strict`, so npm installs only on that version. `npm run audit:critical` fails when `npm audit` reports a critical advisory. CI runs that audit, and fails when Node.js has published a newer security release on this major line. Dependabot opens security-update pull requests for npm and GitHub Actions. A weekly workflow opens a pull request that moves the pin to that security release.
 
 
 
